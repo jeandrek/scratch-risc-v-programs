@@ -32,3 +32,6 @@ scheme.bin: scheme.o lib.o
 
 .S.o:
 	$(CC) $(ASFLAGS) -c -o $@ $<
+
+clean:
+	rm -f *.o *.bin *.txt
