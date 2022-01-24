@@ -9,7 +9,7 @@ CFLAGS=$(ASFLAGS) -O2
 
 .SUFFIXES: .s .S .bin .txt
 
-all: lib.o calc.txt
+all: lib.o scheme.txt
 
 .bin.txt:
 	xxd -p $*.bin | tr -d "\n" | sed "s/.\{2\}/&\n/g" | sed "s/^/0x/g" >$@
