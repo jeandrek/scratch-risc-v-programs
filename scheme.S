@@ -23,9 +23,9 @@
 
 # Every stack frame reachable by GC must have no dead values.
 #define ZEROFRAME		\
-	sw	x0,8(sp);	\
-	sw	x0,4(sp);	\
-	sw	x0,(sp)
+	sw	zero,8(sp);	\
+	sw	zero,4(sp);	\
+	sw	zero,(sp)
 
 #define SYM(name)		sym_ ## name
 #define NAME_SYM(n1, n2)	.align 4; sym_ ## n1 = . + 3; .string n2
@@ -360,7 +360,7 @@ Leval_pair:
 	lla	t1,SYM(define)
 	beq	t0,t1,Leval_define
 	addi	sp,sp,-16
-	sw	x0,(sp)
+	sw	zero,(sp)
 	sw	ra,12(sp)
 	lw	a0,4(a0)
 	sw	a1,8(sp)
@@ -417,7 +417,7 @@ Leval_conseq:
 
 Leval_set:
 	addi	sp,sp,-16
-	sw	x0,(sp)
+	sw	zero,(sp)
 	sw	ra,12(sp)
 	lw	a0,4(a0)
 	lw	t0,(a0)
@@ -475,7 +475,7 @@ Leval_let:
 	# 8(sp) = expression
 	# 4(sp) = environment
 	addi	sp,sp,-32
-	sw	x0,(sp)
+	sw	zero,(sp)
 	sw	ra,28(sp)
 	lw	t0,4(a0)
 	lw	t1,4(t0)
@@ -483,7 +483,7 @@ Leval_let:
 	sw	a1,4(sp)
 	lw	t0,(t0)
 	li	a1,0
-	sw	x0,12(sp)
+	sw	zero,12(sp)
 1:
 	beqz	t0,2f
 	lw	t1,(t0)
@@ -581,7 +581,7 @@ eval_sequence:
 	beqz	t0,eval
 	addi	sp,sp,-16
 	sw	ra,12(sp)
-	sw	x0,(sp)
+	sw	zero,(sp)
 	j	2f
 1:
 	lw	a0,(t0)
@@ -711,7 +711,7 @@ define_variable:
 	j	4f
 3:
 	addi	sp,sp,-16
-	sw	x0,(sp)
+	sw	zero,(sp)
 	sw	ra,12(sp)
 	lw	t0,(a2)
 	sw	a1,8(sp)
@@ -804,6 +804,8 @@ Lunexpected_char:
 
 Lread_num:
 	addi	t0,a0,-'0'
+	sw	t0,8(sp)
+	sw	t2,4(sp)
 1:
 	call	peekchar
 	li	t1,'0'
@@ -811,12 +813,14 @@ Lread_num:
 	li	t1,'9'
 	bgt	a0,t1,2f
 	call	readchar
+	lw	t0,8(sp)
 	addi	a0,a0,-'0'
 	li	t1,10
 	mul	t0,t0,t1
 	add	t0,t0,a0
 	j	1b
 2:
+	lw	t2,4(sp)
 	mv	a0,t0
 	beqz	t2,3f
 	neg	a0,a0
@@ -832,6 +836,7 @@ Lread_symbol:
 	sb	a0,(sp)
 	addi	t0,sp,1
 1:
+	sw	t0,24(sp)
 	call	peekchar
 	li	t1,'A'
 	blt	a0,t1,2f
@@ -852,11 +857,13 @@ Lread_symbol:
 	j	4b
 Lconsume:
 	call	readchar
+	lw	t0,24(sp)
 	sb	a0,(t0)
 	addi	t0,t0,1
 	j	1b
 5:
-	sb	x0,(t0)
+	lw	t0,24(sp)
+	sb	zero,(t0)
 	mv	a0,sp
 	call	intern
 	lw	ra,28(sp)
@@ -1102,7 +1109,7 @@ cons:
 2:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
-	sw	x0,(sp)
+	sw	zero,(sp)
 	sw	a0,8(sp)
 	sw	a1,4(sp)
 	call	gc

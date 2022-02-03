@@ -1,7 +1,5 @@
-void writestr(char *);
-void writenum(int);
-int readchar(void);
-void writechar(int);
+#include "lib.h"
+
 int isdigit(int c);
 
 void

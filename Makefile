@@ -7,15 +7,17 @@ LDFLAGS=-T riscv.ld
 ASFLAGS=-march=rv32imfd
 CFLAGS=$(ASFLAGS) -O2
 
+COMMON=lib.o tty.o
+
 .SUFFIXES: .s .S .bin .txt
 
-all: lib.o scheme.txt
+all: $(COMMON) scheme.txt
 
 .bin.txt:
 	xxd -p $*.bin | tr -d "\n" | sed "s/.\{2\}/&\n/g" | sed "s/^/0x/g" >$@
 
-scheme.bin: scheme.o lib.o
-	$(LD) -T scheme.ld -o $* lib.o scheme.o
+scheme.bin: scheme.o $(COMMON)
+	$(LD) -T scheme.ld -o $* $(COMMON) scheme.o
 	$(OBJCOPY) --dump-section .text=$@ --dump-section .obarray=obarray $*
 	SZ=`ls -l $@ | awk '{print($$5)}'`; \
 	N=`expr 9216 - $$SZ`; \
@@ -24,7 +26,8 @@ scheme.bin: scheme.o lib.o
 	rm -f scheme obarray
 
 .o.bin:
-	$(LD) $(LDFLAGS) -o $@ lib.o $<
+	$(MAKE) $(COMMON)
+	$(LD) $(LDFLAGS) -o $@ $(COMMON) $<
 	$(OBJCOPY) -O binary $@
 
 .s.o:

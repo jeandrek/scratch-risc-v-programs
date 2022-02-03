@@ -1,4 +1,4 @@
 SECTIONS {
-	 .text 0 : { *(.text) *(.rodata) *(.data) *(.bss) }
-	 /DISCARD/ : { *(.comment) }
+	.text 0 : { *(.text) *(.rodata) *(.data) *(.bss) }
+	/DISCARD/ : { *(.comment) }
 }
