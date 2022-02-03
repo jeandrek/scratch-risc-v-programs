@@ -3,7 +3,7 @@
 void readline(void);
 int uart_readchar(void);
 
-volatile static char *const uart = 0x10000000;
+volatile static char *const uart = (char *)0x10000000;
 
 struct plic {
 	uint32_t priorities[1024];
@@ -17,16 +17,16 @@ struct plic {
 	} contexts[15872];
 } __attribute__ ((packed));
 
-volatile static struct plic *const plic = 0xc000000;
+volatile static struct plic *const plic = (struct plic *)0xc000000;
 
 
 void
 ttyinit(void)
 {
-	uart[1] = 1;				/* Enable data interrupt */
-	plic->priorities[10]		= 1;		/* Set priority */
-	plic->enable[0]			= 1<<10;	/* Enable UART interrupts */
-	plic->contexts[0].threshold	= 0;		/* Unmask */
+	uart[1] = 1;				 /* Enable data interrupt */
+	plic->priorities[10]		= 1;	 /* Set priority */
+	plic->enable[0] 		= 1<<10; /* Enable UART interrupts */
+	plic->contexts[0].threshold	= 0;	 /* Unmask */
 }
 
 char linebuf[128];
