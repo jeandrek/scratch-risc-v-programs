@@ -1,4 +1,3 @@
-	plic = 0xc000000
 	.text
 	.globl	_start
 _start:
@@ -11,23 +10,6 @@ _start:
 	csrsi	mstatus,8
 	call	main
 	ebreak
-
-	.globl	trap
-trap:
-	addi	sp,sp,-16
-	sw	t1,12(sp)
-	sw	t2,8(sp)
-	csrr	t1,mcause
-	li	t2,1<<31 | 11
-	bne	t1,t2,1f
-	li	t2,plic + 0x200004
-	lw	t1,(t2)
-	sw	t1,(t2)
-1:
-	lw	t1,12(sp)
-	lw	t2,8(sp)
-	addi	sp,sp,16
-	mret
 
 	.globl	writestr
 writestr:

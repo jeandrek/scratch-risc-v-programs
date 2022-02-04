@@ -7,7 +7,7 @@ ASFLAGS=-march=rv32im -mabi=ilp32
 CFLAGS=$(ASFLAGS) -O2
 LDFLAGS=$(ASFLAGS) -T riscv.ld -nostdlib -lgcc
 
-COMMON=lib.o tty.o
+COMMON=lib.o trap.o tty.o
 
 .SUFFIXES: .s .S .bin .txt
 
