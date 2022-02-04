@@ -29,7 +29,9 @@ ttyinit(void)
 	plic->contexts[0].threshold	= 0;	 /* Unmask */
 }
 
-char linebuf[128];
+#define LINEBUF_SZ	256
+
+char linebuf[LINEBUF_SZ];
 int line_i;
 
 int

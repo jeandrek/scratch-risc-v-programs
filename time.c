@@ -1,30 +1,38 @@
 #include "lib.h"
 
-void showtime(void);
+int64_t gettime(void);
+void showtime(int64_t);
 
 void
 main(void)
 {
 	for (;;) {
-		showtime();
+		showtime(gettime());
 		readchar();
 	}
 }
 
-void
-showtime(void)
+int64_t
+gettime(void)
 {
-	unsigned time_lo, time_hi, time_of_day;
-	long long time;
+	unsigned lo, hi;
 
 	asm ("rdtime %0\n"
 	     "rdtimeh %1\n"
-	     : "=r" (time_lo), "=r" (time_hi));
-	time = (long long)time_hi<<32 | time_lo;
+	     : "=r" (lo), "=r" (hi));
+
+	return (int64_t)hi<<32 | lo;
+}
+
+void
+showtime(int64_t time)
+{
+	int time_of_day;
+
 	time_of_day = (time/1000) % 86400;
 	writenum(time_of_day / 3600);
 	writechar(':');
-	writenum((time_of_day % 3600) / 60);
+	writenum((time_of_day / 60) % 60);
 	writechar(':');
 	writenum(time_of_day % 60);
 	writestr(" UTC");
