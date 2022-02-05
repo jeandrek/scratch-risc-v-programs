@@ -16,6 +16,11 @@ all: $(COMMON) scheme.bin
 .bin.txt:
 	xxd -p $*.bin | tr -d "\n" | sed "s/.\{2\}/&\n/g" | sed "s/^/0x/g" >$@
 
+scheme.bin: scheme.o $(COMMON) image.o
+	$(LD) -o $@ $(COMMON) scheme.o image.o $< $(LDFLAGS)
+	$(OBJCOPY) -O binary $@
+	base32 -w 0 $@; echo
+
 .o.bin:
 	$(MAKE) $(COMMON)
 	$(LD) -o $@ $(COMMON) $< $(LDFLAGS)
