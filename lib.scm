@@ -1,3 +1,5 @@
+(define else #t)
+
 (define number? integer?)
 
 (define (> x y) (< y x))

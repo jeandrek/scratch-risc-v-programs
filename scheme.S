@@ -43,11 +43,15 @@ main:
 	call	writestr
 	lla	a0,image_env
 	lw	a0,(a0)
-	bnez	a0,Limaged
+	beqz	a0,Lnot_imaged
+	lla	t0,image_free
+	lw	REG_FREE,(t0)
+	j	Lready
+Lnot_imaged:
 	lla	a0,str_fresh
 	call	writestr
 	call	make_initial_environment
-Limaged:
+Lready:
 	sw	a0,8(sp)
 1:
 	li	a0,'>'
@@ -327,12 +331,18 @@ prim_newline:
 prim_image:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
+	call	gc
+	blt	REG_TOSPACE,REG_FROMSPACE,1f
+	call	gc
+1:
 	li	t0,TOP_OF_STACK - 16
 	lw	t0,8(t0)
 	lla	t1,image_env
 	sw	t0,(t1)
+	lla	t1,image_free
+	sw	REG_FREE,(t1)
 	li	a0,0
-	li	a1,0x4100
+	li	a1,TOP_OF_STACK + SPACE_SIZE
 	call	image
 	lla	a0,SYM(ok)
 	lw	ra,12(sp)
@@ -1233,10 +1243,10 @@ Lfound_broken_heart:
 	mv	a0,t6
 	ret
 
-	#.bss
-image_env:
-	.skip	4
-	#.section	.rodata
+	.bss
+image_env:	.skip	4
+image_free:	.skip	4
+	.section	.rodata
 ext_alph_chars:	.string	"!$%&*+-./:<=>?@^_~"
 str_msg:	.string	"Scheme interpreter\n"
 str_fresh:	.string	"(Not been imaged)\n"
