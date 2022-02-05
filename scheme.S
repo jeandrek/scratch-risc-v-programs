@@ -43,7 +43,7 @@ main:
 	lla	a0,str_msg
 	call	writestr
 	lla	a0,image_env
-	lbu	a0,(a0)
+	lw	a0,(a0)
 	bnez	a0,imaged
 	lla	a0,str_fresh
 	call	writestr
