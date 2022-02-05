@@ -37,7 +37,7 @@
   (define (loop lst acc)
     (if (null? lst)
         (reverse acc)
-        (loop (cdr lst) (cons (proc (car lst)) ac))))
+        (loop (cdr lst) (cons (proc (car lst)) acc))))
   (loop lst '()))
 
 (define (for-each proc lst)

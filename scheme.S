@@ -9,7 +9,7 @@
 #define REG_FROMSPACE	s1
 #define REG_TOSPACE	s2
 #define REG_FREE	s3
-#define TOP_OF_STACK	0x2000
+#define TOP_OF_STACK	0x2100
 #define SPACE_SIZE	0x1000
 
 #define SYMBOL_LENGTH	16
@@ -63,12 +63,12 @@ Limaged:
 	j	1b
 
 error:
-	#sw	a1,12(sp)
+	sw	a1,12(sp)
 	call	writestr
-	#lw	a0,12(sp)
-	#beqz	a0,1f
-	#call	write
-1:
+	lw	a0,12(sp)
+	beqz	a0,2f
+	call	write
+2:
 	li	a0,'\n'
 	call	writechar
 	li	sp,TOP_OF_STACK - 16
@@ -332,7 +332,7 @@ prim_image:
 	lla	t1,image_env
 	sw	t0,(t1)
 	li	a0,0
-	li	a1,0x4000
+	li	a1,0x4100
 	call	image
 	lla	a0,SYM(ok)
 	lw	ra,12(sp)
@@ -720,7 +720,7 @@ set_variable:
 	j	set_variable
 
 Lunbound:
-	#mv	a1,a0
+	mv	a1,a0
 	lla	a0,str_unbound
 	tail	error
 
