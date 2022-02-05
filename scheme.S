@@ -63,7 +63,12 @@ Limaged:
 	j	1b
 
 error:
+	#sw	a1,12(sp)
 	call	writestr
+	#lw	a0,12(sp)
+	#beqz	a0,1f
+	#call	write
+1:
 	li	a0,'\n'
 	call	writechar
 	li	sp,TOP_OF_STACK - 16
@@ -122,6 +127,7 @@ make_initial_environment:
 	andi	t0,x,3;			\
 	beqz	t0,2f;			\
 1:					\
+	mv	a1,x;			\
 	lla	a0,str_type_pair;	\
 	tail	error;			\
 2:
@@ -130,6 +136,7 @@ make_initial_environment:
 	andi	t0,x,3;			\
 	li	t1,TAG_FIXNUM;		\
 	beq	t0,t1,1f;		\
+	mv	a1,x;			\
 	lla	a0,str_type_fixnum;	\
 	tail	error;			\
 1:
@@ -352,6 +359,7 @@ eval:
 	beq	a0,t0,Leval_self_evaluating
 	j	Leval_variable
 2:
+	mv	a1,a0
 	lla	a0,str_bad_exp
 	tail	error
 
@@ -666,6 +674,7 @@ Lapply_primitive:
 	mv	a0,a1
 	jr	(t0)
 Lnot_proc:
+	mv	a1,a0
 	lla	a0,str_not_proc
 	tail	error
 
@@ -711,6 +720,7 @@ set_variable:
 	j	set_variable
 
 Lunbound:
+	#mv	a1,a0
 	lla	a0,str_unbound
 	tail	error
 
@@ -820,6 +830,7 @@ Lwhitespace:
 	beq	a0,t1,Lread_hash
 Lunexpected_char:
 	lla	a0,str_bad_read
+	li	a1,0
 	tail	error
 
 Lread_num:
@@ -1145,6 +1156,7 @@ cons:
 	j	1b
 Lout_of_mem:
 	lla	a0,str_out_of_mem
+	li	a1,0
 	tail	error
 
 gc:
@@ -1232,12 +1244,12 @@ str_prim:	.string	"#[primitive]"
 str_proc:	.string "#[procedure "
 str_gc:		.string	"GC cycle\n"
 str_bad_read:	.string	"Unexpected character"
-str_bad_exp:	.string	"Unknown expression type"
-str_unbound:	.string	"Unbound variable"
-str_not_proc:	.string	"Not a procedure"
+str_bad_exp:	.string	"Unknown expression type: "
+str_unbound:	.string	"Unbound variable: "
+str_not_proc:	.string	"Not a procedure: "
 str_out_of_mem:	.string	"Out of memory"
-str_type_pair:	.string	"Expected a pair"
-str_type_fixnum:.string	"Expected a fixnum"
+str_type_pair:	.string	"Expected a pair: "
+str_type_fixnum:.string	"Expected a fixnum: "
 
 prim_addrs:
 	.word	prim_eq
