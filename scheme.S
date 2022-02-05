@@ -19,7 +19,7 @@
 #define TRUE		7
 #define FALSE		3
 
-#define NUM_PRIMITIVES	21
+#define NUM_PRIMITIVES	22
 
 # Every stack frame reachable by GC must have no dead values.
 #define ZEROFRAME		\
@@ -42,7 +42,13 @@ main:
 	sw	ra,12(sp)
 	lla	a0,str_msg
 	call	writestr
+	lla	a0,image_env
+	lbu	a0,(a0)
+	bnez	a0,imaged
+	lla	a0,str_fresh
+	call	writestr
 	call	make_initial_environment
+imaged:
 	sw	a0,8(sp)
 1:
 	li	a0,'>'
@@ -307,6 +313,21 @@ prim_newline:
 	sw	ra,12(sp)
 	li	a0,'\n'
 	call	writechar
+	lla	a0,SYM(ok)
+	lw	ra,12(sp)
+	addi	sp,sp,16
+	ret
+
+prim_image:
+	addi	sp,sp,-16
+	sw	ra,12(sp)
+	li	t0,TOP_OF_STACK - 16
+	lw	t0,8(t0)
+	lla	t1,image_env
+	sw	t0,(t1)
+	li	a0,0
+	li	a1,10000
+	call	image
 	lla	a0,SYM(ok)
 	lw	ra,12(sp)
 	addi	sp,sp,16
@@ -1199,8 +1220,13 @@ Lfound_broken_heart:
 	mv	a0,t6
 	ret
 
+	#.bss
+image_env:
+	.skip	4
+	#.section	.rodata
 ext_alph_chars:	.string	"!$%&*+-./:<=>?@^_~"
 str_msg:	.string	"Scheme interpreter\n"
+str_fresh:	.string	"(Not been imaged)\n"
 str_prim:	.string	"#[primitive]"
 str_proc:	.string "#[procedure "
 str_gc:		.string	"GC cycle\n"
@@ -1266,3 +1292,4 @@ prim_addrs:
 	MAKE_SYM("READ")
 	MAKE_SYM("WRITE")
 	MAKE_SYM("NEWLINE")
+	MAKE_SYM("IMAGE")

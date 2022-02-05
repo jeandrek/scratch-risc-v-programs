@@ -16,8 +16,8 @@ all: $(COMMON) scheme.bin
 .bin.txt:
 	xxd -p $*.bin | tr -d "\n" | sed "s/.\{2\}/&\n/g" | sed "s/^/0x/g" >$@
 
-scheme.bin: scheme.o $(COMMON)
-	$(LD) -nostdlib -T scheme.ld -o $* $(COMMON) scheme.o
+scheme.bin: scheme.o $(COMMON) image.o
+	$(LD) -nostdlib -T scheme.ld -o $* $(COMMON) scheme.o image.o
 	$(OBJCOPY) --dump-section .text=$@ --dump-section .obarray=obarray $*
 	SZ=`ls -l $@ | awk '{print($$5)}'`; \
 	N=`expr 9216 - $$SZ`; \
