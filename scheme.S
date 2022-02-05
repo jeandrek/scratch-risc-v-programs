@@ -325,7 +325,7 @@ prim_image:
 	lla	t1,image_env
 	sw	t0,(t1)
 	li	a0,0
-	li	a1,10000
+	li	a1,0x2c00
 	call	image
 	lla	a0,SYM(ok)
 	lw	ra,12(sp)
