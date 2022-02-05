@@ -10,7 +10,7 @@
 #define REG_TOSPACE	s2
 #define REG_FREE	s3
 #define TOP_OF_STACK	0x2000
-#define SPACE_SIZE	0x600
+#define SPACE_SIZE	0x1000
 
 #define SYMBOL_LENGTH	16
 
@@ -34,7 +34,7 @@
 	.globl	main
 main:
 	li	REG_TOSPACE,TOP_OF_STACK
-	addi	REG_FROMSPACE,REG_TOSPACE,SPACE_SIZE
+	li	REG_FROMSPACE,TOP_OF_STACK + SPACE_SIZE
 	mv	REG_FREE,sp
 	addi	sp,sp,-16
 	ZEROFRAME
@@ -149,7 +149,7 @@ Lcmp:
 	li	a0,FALSE
 	ret
 
-prim_numberp:
+prim_integerp:
 	lw	a0,(a0)
 	andi	a0,a0,3
 	li	t0,TAG_FIXNUM
@@ -325,7 +325,7 @@ prim_image:
 	lla	t1,image_env
 	sw	t0,(t1)
 	li	a0,0
-	li	a1,0x2c00
+	li	a1,0x4000
 	call	image
 	lla	a0,SYM(ok)
 	lw	ra,12(sp)
@@ -1117,7 +1117,8 @@ nreverse:
 	.globl	cons
 cons:
 	mv	t0,REG_TOSPACE
-	addi	t0,t0,SPACE_SIZE
+	li	t1,SPACE_SIZE
+	add	t0,t0,t1
 	beq	REG_FREE,t0,2f
 1:
 	mv	t0,REG_FREE
@@ -1136,7 +1137,8 @@ cons:
 	lw	a1,4(sp)
 	lw	a0,8(sp)
 	mv	t0,REG_TOSPACE
-	addi	t0,t0,SPACE_SIZE
+	li	t1,SPACE_SIZE
+	add	t0,t0,t1
 	beq	REG_FREE,t0,Lout_of_mem
 	lw	ra,12(sp)
 	addi	sp,sp,16
@@ -1239,7 +1241,7 @@ str_type_fixnum:.string	"Expected a fixnum"
 
 prim_addrs:
 	.word	prim_eq
-	.word	prim_numberp
+	.word	prim_integerp
 	.word	prim_num_eql
 	.word	prim_lt
 	.word	prim_add
@@ -1273,7 +1275,7 @@ obarray:
 	NAME_SYM(define, "DEFINE")
 	NAME_SYM(ok, "OK")
 	MAKE_SYM("EQ?")
-	MAKE_SYM("NUMBER?")
+	MAKE_SYM("INTEGER?")
 	MAKE_SYM("=")
 	MAKE_SYM("<")
 	MAKE_SYM("+")
@@ -1294,4 +1296,4 @@ obarray:
 	MAKE_SYM("WRITE")
 	MAKE_SYM("NEWLINE")
 	MAKE_SYM("IMAGE")
-	.skip	544
+	.skip	1040
