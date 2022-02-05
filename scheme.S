@@ -9,10 +9,9 @@
 #define REG_FROMSPACE	s1
 #define REG_TOSPACE	s2
 #define REG_FREE	s3
-#define TOP_OF_STACK	0x1800
+#define TOP_OF_STACK	0x2000
 #define SPACE_SIZE	0x600
 
-#define OBARRAY		TOP_OF_STACK + 2*SPACE_SIZE
 #define SYMBOL_LENGTH	16
 
 #define BROKEN_HEART	4
@@ -920,7 +919,7 @@ intern:
 	addi	sp,sp,-16
 	ZEROFRAME
 	sw	ra,12(sp)
-	li	a0,OBARRAY
+	lla	a0,OBARRAY
 1:
 	lw	t0,(a0)
 	beqz	t0,3f
@@ -1235,7 +1234,8 @@ prim_addrs:
 	.word	prim_write
 	.word	prim_newline
 
-	.section	.obarray
+	.section	.data
+OBARRAY:
 	NAME_SYM(quote, "QUOTE")
 	NAME_SYM(lambda, "LAMBDA")
 	NAME_SYM(if, "IF")
@@ -1266,3 +1266,4 @@ prim_addrs:
 	MAKE_SYM("READ")
 	MAKE_SYM("WRITE")
 	MAKE_SYM("NEWLINE")
+	.skip	544

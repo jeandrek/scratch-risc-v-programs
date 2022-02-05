@@ -1,7 +1,7 @@
 	.text
 	.globl	_start
 _start:
-	li	sp,0x1800
+	li	sp,0x2000
 	call	ttyinit
 	li	t1,1<<11
 	csrs	mie, t1
