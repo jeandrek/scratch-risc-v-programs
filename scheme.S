@@ -1259,6 +1259,7 @@ prim_addrs:
 	.word	prim_read
 	.word	prim_write
 	.word	prim_newline
+	.word	prim_image
 
 	.section	.data
 obarray:
