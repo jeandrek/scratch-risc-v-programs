@@ -819,19 +819,11 @@ Lwhitespace:
 	li	t2,1
 	j	Lread_num
 3:
-	li	t1,'A'
-	blt	a0,t1,4f
-	li	t1,'Z'
-	ble	a0,t1,Lread_symbol
-4:
-	lla	t1,ext_alph_chars
-5:
-	lbu	t2,(t1)
-	beqz	t2,6f
-	beq	a0,t2,Lread_symbol
-	addi	t1,t1,1
-	j	5b
-6:
+	sw	a0,8(sp)
+	call	is_nondigit_symbol_char
+	bnez	a0,Lread_symbol
+	lw	a0,8(sp)
+7:
 	li	t1,'('
 	beq	a0,t1,Lread_list
 	li	t1,'\''
@@ -873,36 +865,40 @@ Lread_num:
 	ret
 
 Lread_symbol:
+	lw	a0,8(sp)
+	li	t1,'A'
+	blt	a0,t1,1f
+	li	t1,'Z'
+	bgt	a0,t1,1f
+	addi	a0,a0,32
+1:
 	addi	sp,sp,-16
 	sb	a0,(sp)
 	addi	t0,sp,1
-1:
+2:
 	sw	t0,24(sp)
 	call	peekchar
-	li	t1,'A'
-	blt	a0,t1,2f
-	li	t1,'Z'
-	ble	a0,t1,Lconsume
-2:
+	sw	a0,20(sp)
+	call	is_nondigit_symbol_char
+	bnez	a0,Lconsume
+	lw	a0,20(sp)
 	li	t1,'0'
-	blt	a0,t1,3f
+	blt	a0,t1,4f
 	li	t1,'9'
-	ble	a0,t1,Lconsume
-3:
-	lla	t1,ext_alph_chars
-4:
-	lbu	t2,(t1)
-	beqz	t2,5f
-	beq	a0,t2,Lconsume
-	addi	t1,t1,1
-	j	4b
+	bgt	a0,t1,4f
 Lconsume:
 	call	readchar
+	li	t1,'A'
+	blt	a0,t1,3f
+	li	t1,'Z'
+	bgt	a0,t1,3f
+	addi	a0,a0,32
+3:
 	lw	t0,24(sp)
 	sb	a0,(t0)
 	addi	t0,t0,1
-	j	1b
-5:
+	j	2b
+4:
 	lw	t0,24(sp)
 	sb	zero,(t0)
 	mv	a0,sp
@@ -953,6 +949,32 @@ Lread_hash:
 2:
 	lw	ra,12(sp)
 	addi	sp,sp,16
+	ret
+
+is_nondigit_symbol_char:
+	li	t0,'a'
+	blt	a0,t0,1f
+	li	t0,'z'
+	bgt	a0,t0,5f
+	j	4f
+1:
+	li	t0,'A'
+	blt	a0,t0,2f
+	li	t0,'Z'
+	ble	a0,t0,4f
+2:
+	lla	t0,ext_alph_chars
+3:
+	lbu	t1,(t0)
+	beqz	t1,5f
+	beq	a0,t1,4f
+	addi	t0,t0,1
+	j	3b
+4:
+	li	a0,1
+	ret
+5:
+	li	a0,0
 	ret
 
 	.globl	intern
@@ -1287,35 +1309,35 @@ prim_addrs:
 
 	.section	.data
 obarray:
-	NAME_SYM(quote, "QUOTE")
-	NAME_SYM(lambda, "LAMBDA")
-	NAME_SYM(if, "IF")
-	NAME_SYM(set, "SET!")
-	NAME_SYM(begin, "BEGIN")
-	NAME_SYM(cond, "COND")
-	NAME_SYM(let, "LET")
-	NAME_SYM(define, "DEFINE")
-	NAME_SYM(ok, "OK")
-	MAKE_SYM("EQ?")
-	MAKE_SYM("INTEGER?")
+	NAME_SYM(quote, "quote")
+	NAME_SYM(lambda, "lambda")
+	NAME_SYM(if, "if")
+	NAME_SYM(set, "set!")
+	NAME_SYM(begin, "begin")
+	NAME_SYM(cond, "cond")
+	NAME_SYM(let, "let")
+	NAME_SYM(define, "define")
+	NAME_SYM(ok, "ok")
+	MAKE_SYM("eq?")
+	MAKE_SYM("integer?")
 	MAKE_SYM("=")
 	MAKE_SYM("<")
 	MAKE_SYM("+")
 	MAKE_SYM("-")
 	MAKE_SYM("*")
-	MAKE_SYM("QUOTIENT")
-	MAKE_SYM("REMAINDER")
-	MAKE_SYM("PAIR?")
-	MAKE_SYM("CONS")
-	MAKE_SYM("CAR")
-	MAKE_SYM("CDR")
-	MAKE_SYM("SET-CAR!")
-	MAKE_SYM("SET-CDR!")
-	MAKE_SYM("LIST")
-	MAKE_SYM("SYMBOL?")
-	MAKE_SYM("PROCEDURE?")
-	MAKE_SYM("READ")
-	MAKE_SYM("WRITE")
-	MAKE_SYM("NEWLINE")
-	MAKE_SYM("IMAGE")
+	MAKE_SYM("quotient")
+	MAKE_SYM("remainder")
+	MAKE_SYM("pair?")
+	MAKE_SYM("cons")
+	MAKE_SYM("car")
+	MAKE_SYM("cdr")
+	MAKE_SYM("set-car!")
+	MAKE_SYM("set-cdr!")
+	MAKE_SYM("list")
+	MAKE_SYM("symbol?")
+	MAKE_SYM("procedure?")
+	MAKE_SYM("read")
+	MAKE_SYM("write")
+	MAKE_SYM("newline")
+	MAKE_SYM("image")
 	.skip	1040
