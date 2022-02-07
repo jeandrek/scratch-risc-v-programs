@@ -1,15 +1,15 @@
-# A simple Scheme interpreter
-# With a SICP-esque Cheney's algorithm garbage collector
+#### A simple Scheme interpreter
+#### With a SICP-esque Cheney's algorithm garbage collector
 
 #define TAG_PAIR	0
 #define TAG_FIXNUM	1
 #define TAG_PROCEDURE	2
 #define TAG_SYMBOL	3
 
-#define REG_FROMSPACE	s1
-#define REG_TOSPACE	s2
-#define REG_FREE	s3
-#define TOP_OF_STACK	0x2100
+#define REG_FROMSPACE	s9
+#define REG_TOSPACE	s10
+#define REG_FREE	s11
+#define TOP_OF_STACK	0x3000
 #define SPACE_SIZE	0x1000
 
 #define SYMBOL_LENGTH	16
@@ -52,7 +52,7 @@ Lnot_imaged:
 	call	writestr
 	call	make_initial_environment
 Lready:
-	sw	a0,8(sp)
+	sw	a0,8(sp)	# Saved for reason of error
 1:
 	li	a0,'>'
 	call	writechar
@@ -79,49 +79,48 @@ error:
 	j	1b
 
 
-# Initial environment and primitives
+### Initial environment and primitives
 
 	.globl	make_initial_environment
 make_initial_environment:
 	addi	sp,sp,-16
-	ZEROFRAME
 	sw	ra,12(sp)
-	lla	a0,SYM(ok) + SYMBOL_LENGTH
-	li	t0,NUM_PRIMITIVES
+	sw	s1,8(sp)
+	sw	s2,4(sp)
+	sw	s3,(sp)
+	lla	s1,SYM(ok) + SYMBOL_LENGTH
+	li	s2,NUM_PRIMITIVES
 	li	a1,0
 1:
-	beqz	t0,2f
-	sw	t0,8(sp)
+	beqz	s2,2f
+	mv	a0,s1
 	call	cons
-	lw	t0,8(sp)
 	mv	a1,a0
-	lw	a0,(a1)
-	addi	a0,a0,SYMBOL_LENGTH
-	addi	t0,t0,-1
+	addi	s1,s1,SYMBOL_LENGTH
+	addi	s2,s2,-1
 	j	1b
 2:
-	sw	a1,8(sp)
-	lla	t0,prim_addrs
-	li	t1,NUM_PRIMITIVES
+	mv	s3,a1
+	lla	s1,prim_addrs
+	li	s2,NUM_PRIMITIVES
 	li	a1,0
 1:
-	beqz	t1,2f
-	lw	a0,(t0)
+	beqz	s2,2f
+	lw	a0,(s1)
 	ori	a0,a0,TAG_PROCEDURE
-	sw	t1,4(sp)
-	sw	t0,(sp)
 	call	cons
-	lw	t0,(sp)
-	lw	t1,4(sp)
 	mv	a1,a0
-	addi	t0,t0,4
-	addi	t1,t1,-1
+	addi	s1,s1,4
+	addi	s2,s2,-1
 	j	1b
 2:
-	lw	a0,8(sp)
+	mv	a0,s3
 	call	cons
 	li	a1,0
 	call	cons
+	lw	s3,(sp)
+	lw	s2,4(sp)
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
@@ -331,6 +330,7 @@ prim_newline:
 prim_image:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
+	ZEROFRAME
 	call	gc
 	blt	REG_TOSPACE,REG_FROMSPACE,1f
 	call	gc
@@ -350,7 +350,7 @@ prim_image:
 	ret
 
 
-# Evaluator
+### Evaluator
 
 	.globl	eval
 eval:
@@ -413,6 +413,9 @@ Leval_pair:
 	addi	sp,sp,16
 	tail	apply
 
+
+## Special forms
+
 Leval_quote:
 	lw	a0,4(a0)
 	lw	a0,(a0)
@@ -455,18 +458,21 @@ Leval_conseq:
 
 Leval_set:
 	addi	sp,sp,-16
-	sw	zero,(sp)
 	sw	ra,12(sp)
+	sw	s1,8(sp)
+	sw	s2,4(sp)
+	sw	zero,(sp)
 	lw	a0,4(a0)
-	lw	t0,(a0)
+	lw	s1,(a0)
 	lw	a0,4(a0)
 	lw	a0,(a0)
-	sw	t0,8(sp)
-	sw	a1,4(sp)
+	mv	s2,a1
 	call	eval
 	mv	a1,a0
-	lw	a0,8(sp)
-	lw	a2,4(sp)
+	mv	a0,s1
+	mv	a2,s2
+	lw	s2,4(sp)
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	tail	set_variable
@@ -478,79 +484,93 @@ Leval_begin:
 Leval_cond:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
-	lw	t0,4(a0)
+	sw	s1,8(sp)
+	sw	s2,4(sp)
+	sw	s3,(sp)
+	lw	s1,4(a0)
+	mv	s2,a1
 1:
-	bnez	t0,2f
+	bnez	s1,2f
 	lla	a0,SYM(ok)
+	lw	s3,(sp)
+	lw	s2,4(sp)
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
 2:
-	lw	t1,(t0)
-	lw	a0,(t1)
-	sw	t0,8(sp)
-	sw	t1,4(sp)
-	sw	a1,(sp)
+	lw	t0,(s1)
+	lw	a0,(t0)
+	lw	s3,4(t0)
+	mv	a1,s2
 	call	eval
-	lw	a1,(sp)
 	li	t0,FALSE
 	beq	a0,t0,3f
-	lw	a0,4(sp)
-	lw	a0,4(a0)
+	mv	a0,s3
+	mv	a1,s2
+	lw	s3,(sp)
+	lw	s2,4(sp)
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	tail	eval_sequence
 3:
-	lw	t0,8(sp)
-	lw	t0,4(t0)
+	lw	s1,4(s1)
 	j	1b
 
 Leval_let:
-	# 24(sp) = let body
-	# 20(sp) = let bindings
-	# 16(sp) = variables
-	# 12(sp) = values
-	# 8(sp) = expression
-	# 4(sp) = environment
+	# s1 = let bindings
+	# s2 = let body
+	# s3 = variables
+	# s4 = values
+	# s5 = expression
+	# s6 = environment
 	addi	sp,sp,-32
-	sw	zero,(sp)
 	sw	ra,28(sp)
+	sw	s1,24(sp)
+	sw	s2,20(sp)
+	sw	s3,16(sp)
+	sw	s4,12(sp)
+	sw	s5,8(sp)
+	sw	s6,4(sp)
+	sw	zero,(sp)
 	lw	t0,4(a0)
-	lw	t1,4(t0)
-	sw	t1,24(sp)
-	sw	a1,4(sp)
-	lw	t0,(t0)
-	li	a1,0
-	sw	zero,12(sp)
+	lw	s1,(t0)
+	lw	s2,4(t0)
+	li	s3,0
+	li	s4,0
+	mv	s6,a1
 1:
-	beqz	t0,2f
-	lw	t1,(t0)
-	lw	a0,(t1)
-	lw	t1,4(t1)
-	lw	t1,(t1)
-	sw	t1,8(sp)
-	lw	t0,4(t0)
-	sw	t0,20(sp)
+	beqz	s1,2f
+	lw	t0,(s1)
+	lw	s5,4(t0)
+	lw	s5,(s5)
+	lw	a0,(t0)
+	mv	a1,s3
 	call	cons
-	sw	a0,16(sp)
-	lw	a0,8(sp)
-	lw	a1,4(sp)
+	mv	s3,a0
+	mv	a0,s5
+	mv	a1,s6
 	call	eval
-	lw	a1,12(sp)
+	mv	a1,s4
 	call	cons
-	sw	a0,12(sp)
-	lw	a1,16(sp)
-	lw	t0,20(sp)
+	mv	s4,a0
+	lw	s1,4(s1)
 	j	1b
 2:
-	mv	a0,a1
-	lw	a1,12(sp)
-	sw	ra,12(sp)
+	mv	a0,s3
+	mv	a1,s4
 	call	cons
-	lw	a1,4(sp)
+	mv	a1,s6
 	call	cons
 	mv	a1,a0
-	lw	a0,24(sp)
+	mv	a0,s2
+	lw	s6,4(sp)
+	lw	s5,8(sp)
+	lw	s4,12(sp)
+	lw	s3,16(sp)
+	lw	s2,20(sp)
+	lw	s1,24(sp)
 	lw	ra,28(sp)
 	addi	sp,sp,32
 	tail	eval_sequence
@@ -638,19 +658,21 @@ eval_sequence:
 	tail	eval
 
 
-# Procedures and environments
+### Procedures and environments
 
 	.globl	make_procedure
 make_procedure:
 	addi	sp,sp,-16
 	ZEROFRAME
 	sw	ra,12(sp)
-	sw	a2,8(sp)
+	sw	s1,8(sp)
+	mv	s1,a2
 	call	cons
 	mv	a1,a0
-	lw	a0,8(sp)
+	mv	a0,s1
 	call	cons
 	ori	a0,a0,TAG_PROCEDURE
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
@@ -772,7 +794,7 @@ define_variable:
 	ret
 
 
-# Reader and symbols
+### Reader and symbols
 
 	.globl	read
 read:
@@ -938,12 +960,12 @@ Lread_quote:
 
 Lread_hash:
 	call	readchar
-	li	t0,'T'
+	li	t0,'t'
 	bne	a0,t0,1f
 	li	a0,TRUE
 	j	2f
 1:
-	li	t0,'F'
+	li	t0,'f'
 	bne	a0,t0,Lunexpected_char
 	li	a0,FALSE
 2:
@@ -1036,7 +1058,7 @@ str_cpy:
 	ret
 
 
-# Printer
+### Printer
 
 	.globl	write
 write:
@@ -1138,7 +1160,7 @@ Lwrite_symbol:
 	tail	writestr
 
 
-# Lists
+### Lists
 
 	.globl nreverse
 nreverse:
@@ -1155,7 +1177,7 @@ nreverse:
 	ret
 
 
-# Allocation and garbage collector
+### Allocation and garbage collector
 
 	.globl	cons
 cons:
@@ -1191,6 +1213,11 @@ Lout_of_mem:
 	li	a1,0
 	tail	error
 
+#define GC_ROOT(x)		\
+	mv	a0,x;		\
+	call	relocate;	\
+	mv	x,a0
+
 gc:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
@@ -1200,6 +1227,12 @@ gc:
 	mv	REG_FROMSPACE,REG_TOSPACE
 	mv	REG_TOSPACE,t0
 	mv	REG_FREE,t0
+	GC_ROOT(s1)
+	GC_ROOT(s2)
+	GC_ROOT(s3)
+	GC_ROOT(s4)
+	GC_ROOT(s5)
+	GC_ROOT(s6)
 	addi	t1,sp,16
 	li	t2,TOP_OF_STACK
 Ltraverse_stack:
