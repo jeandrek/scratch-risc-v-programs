@@ -1,3 +1,9 @@
+/*
+ * This is not a program for the emulator; it just produces
+ * a state machine table for ANSI escape codes used by the
+ * Scratch project.
+ */
+
 #include <stdio.h>
 #include <ctype.h>
 

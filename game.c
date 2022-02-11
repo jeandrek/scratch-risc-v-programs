@@ -1,10 +1,8 @@
 #include "lib.h"
 
-int sqrt(int);
-
 #define SCALE 256
-#define NCOLS 50
-#define NROWS 15
+#define NCOLS 55
+#define NROWS 16
 
 #define PLAYER_APPEARANCE "\33[30;43m:-)\33[m"
 #define VILLIAN_APPEARANCE "\33[30;41m>:|\33[m"
@@ -24,8 +22,6 @@ struct sprite {
 
 SPRITE *thesprites;
 
-#define rand()	93778423
-
 void controls(void);
 void tick();
 void screen(void);
@@ -34,14 +30,17 @@ void randpos(SPRITE *);
 SPRITE *newsprite(int, int, char *, int, int);
 void deletesprite(SPRITE *);
 
+int rand(void);
+#define sqrt	intsqrt
+int sqrt(int);
+int abs(int);
+
 int health, score;
 SPRITE *player, *villian;
 
 void
 main(void)
 {
-	/* srand(time(NULL)); */
-
 	line_buffer_flag = 0;
 	echo_flag = 0;
 
@@ -85,7 +84,7 @@ tick(void)
 	int newx, newy;
 	SPRITE *next;
 
-	if (++nticks == 360) {
+	if (++nticks == 96) {
 		randpos(newsprite(1, 1, VILLIAN_APPEARANCE, 3, VILLIAN));
 		nticks = 0;
 	}
@@ -134,7 +133,7 @@ tick(void)
 	}
 	screen();	
 	if (health <= 0) {
-		writestr("You lose\n");
+		writestr("\nGame over\n");
 		for (;;) asm volatile ("wfi");
 	}
 	set_timer(200, tick);
@@ -250,10 +249,25 @@ deletesprite(SPRITE *s)
 
 
 int
+rand(void)
+{
+	static int seed = 9231136;
+
+	seed = (5*seed + 1) % (1<<20);
+	return seed;
+}
+
+int
 sqrt(int x)
 {
 	int y = 10;
 	for (int i = 0; i < 13; i++)
 		y = (y + x/y)/2;
 	return y;
+}
+
+int
+abs(int x)
+{
+	return x < 0 ? -x : x;
 }
