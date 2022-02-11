@@ -1,5 +1,8 @@
 #include "lib.h"
 
+int line_buffer_flag = 1;
+int echo_flag = 1;
+
 void readline(void);
 int uart_readchar(void);
 
@@ -37,6 +40,8 @@ int line_i;
 int
 readchar(void)
 {
+	if (!line_buffer_flag)
+		return uart_readchar();
 	int c = peekchar();
 	line_i++;
 	return c;
@@ -45,6 +50,8 @@ readchar(void)
 int
 peekchar(void)
 {
+	if (!line_buffer_flag)
+		return -1;
 	if (linebuf[line_i] == 0) readline();
 	return linebuf[line_i];
 }
@@ -61,7 +68,7 @@ readline(void)
 	line_i = 0;
 }
 
-int __attribute__ ((noinline))
+int
 uart_readchar(void)
 {
 	int lsr, c;
@@ -72,15 +79,17 @@ uart_readchar(void)
 	}
 
 	c = uart[0];
-	if (c == '\r') {
+	if (echo_flag) {
+		if (c == '\r') {
+			uart[0] = c;
+			c = '\n';
+		}
 		uart[0] = c;
-		c = '\n';
 	}
-	uart[0] = c;	/* Echo */
 	return c;
 }
 
-void __attribute__ ((noinline))
+void
 writechar(int c)
 {
 	if (c == '\n')

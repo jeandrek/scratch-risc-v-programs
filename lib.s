@@ -1,3 +1,6 @@
+	mtime		= 0x1000000
+	mtimecmp	= 0x1000008
+
 	.text
 	.globl	_start
 _start:
@@ -63,3 +66,26 @@ writenum:
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
+
+	.globl	enable_timer
+enable_timer:
+	li	t0,1<<7
+	csrs	mie,t0
+	ret
+
+	.globl	set_timer
+set_timer:
+	lui	t0,%hi(timer_proc)
+	addi	t0,t0,%lo(timer_proc)
+	sw	a1,(t0)
+	li	t0,mtime
+	lw	t1,(t0)
+	add	t1,t1,a0
+	li	t0,mtimecmp
+	sw	t1,(t0)
+	ret
+
+	.bss
+	.globl	timer_proc
+timer_proc:
+	.skip	4
