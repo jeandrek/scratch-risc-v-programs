@@ -18,16 +18,16 @@ _start:
 writestr:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
-	mv	t1,a0
+	sw	s1,8(sp)
+	mv	s1,a0
 1:
-	lbu	a0,(t1)
+	lbu	a0,(s1)
 	beqz	a0,2f
-	sw	t1,8(sp)
 	call	writechar
-	lw	t1,8(sp)
-	addi	t1,t1,1
+	addi	s1,s1,1
 	j	1b
 2:
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
@@ -36,33 +36,32 @@ writestr:
 writenum:
 	addi	sp,sp,-16
 	sw	ra,12(sp)
-	mv	t1,a0
-	bgez	t1,1f
+	sw	s1,8(sp)
+	sw	s2,4(sp)
+	mv	s1,a0
+	bgez	s1,1f
 	li	a0,'-'
-	sw	t1,8(sp)
 	call	writechar
-	lw	t1,8(sp)
-	neg	t1,t1
+	neg	s1,s1
 1:
-	li	t2,10
-	li	t3,1
+	li	s2,1
+	li	t1,10
+	mv	t2,s1
 2:
-	mul	t4,t2,t3
-	bgt	t4,t1,3f
-	mv	t3,t4
+	blt	t2,t1,3f
+	mul	s2,t1,s2
+	div	t2,t2,t1
 	j	2b
 3:
-	div	t4,t1,t3
-	rem	a0,t4,t2
+	div	t2,s1,s2
+	rem	a0,t2,t1
 	addi	a0,a0,'0'
-	sw	t1,8(sp)
-	sw	t3,4(sp)
 	call	writechar
-	lw	t3,4(sp)
-	lw	t1,8(sp)
-	li	t2,10
-	div	t3,t3,t2
-	bgtz	t3,3b
+	li	t1,10
+	div	s2,s2,t1
+	bgtz	s2,3b
+	lw	s2,4(sp)
+	lw	s1,8(sp)
 	lw	ra,12(sp)
 	addi	sp,sp,16
 	ret
