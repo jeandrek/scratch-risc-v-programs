@@ -32,7 +32,7 @@
 
 (define (assq obj lst)
   (cond ((null? lst) #f)
-        ((eq? (car (car lst)) obj) lst)
+        ((eq? (car (car lst)) obj) (car lst))
         (else (assq obj (cdr lst)))))
 
 (define (map proc lst)
